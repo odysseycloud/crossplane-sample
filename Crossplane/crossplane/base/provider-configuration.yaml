@@ -1,0 +1,30 @@
+apiVersion: meta.pkg.crossplane.io/v1
+kind: Configuration
+metadata:
+  name: oc-provider-config
+  annotations:
+    meta.odysseycloud.io/maintainer: Odyssey Cloud (@checksumz)
+    meta.odysseycloud.io/description: Fully operational setup for Google Cloud Platform.
+    meta.odysseycloud.io/readme: A Configuration package that defines a Google Cloud Platform.
+spec:
+  crossplane:
+    version: ">=v1.16.0"
+  dependsOn:
+  - provider: xpkg.upbound.io/crossplane-contrib/function-patch-and-transform
+    version: ">=v0.6.0"
+  - provider: xpkg.upbound.io/upbound/provider-gcp-cloudplatform
+    version: ">=v1.1.0"
+  - provider: xpkg.upbound.io/upbound/provider-gcp-compute
+    version: ">=v1.1.0"
+  - provider: xpkg.upbound.io/upbound/provider-gcp-networkconnectivity
+    version: ">=v1.1.0"
+  - provider: xpkg.upbound.io/upbound/provider-gcp-storage
+    version: ">=v1.1.0"
+  - provider: xpkg.upbound.io/upbound/provider-gcp-dns
+    version: ">=v1.1.0"
+  - provider: xpkg.upbound.io/upbound/provider-terraform
+    version: ">=v0.16.0"
+  - provider: xpkg.upbound.io/upbound/provider-vault
+    version: ">=v1.0.0"
+  # - provider: xpkg.upbound.io/crossplane-contrib/provider-kubernetes
+  #   version: ">=v0.10.0"

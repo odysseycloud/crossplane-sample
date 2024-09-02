@@ -1,0 +1,61 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: dev-apps-infra-setup
+spec:
+  generators:
+  - matrix:                                                                                 
+      generators:
+      - scmProvider: 
+          gitlab:
+            # The Gitlab group ID to scan.
+            group: "xxxx"
+            # If true, scan every branch of every repository. If false, scan only the default branch. Defaults to false.
+            allBranches: true
+            # If true, recurses through subgroups. If false, it searches only in the base group. Defaults to false.
+            includeSubgroups: true
+            # Reference to a Secret containing an access token. (optional)
+            tokenRef:
+              secretName: gitlab-repo-token
+              key: password            
+          cloneProtocol: https
+          filters: 
+          # - pathsExist: [crossplane/infra]
+          - labelMatch: 'gitops-infra-enabled'
+      - git:
+          directories:
+          - path: infra/crossplane/dev
+          repoURL: '{{ url }}'
+          revision: '{{ branch }}'
+          values:
+            env: dev
+            org: xxx
+            cluster: https://kubernetes.default.svc
+  ignoreApplicationDifferences:
+    - jsonPointers: 
+      - /spec/source/targetRevision
+      # - /spec/source/plugin/env
+      - /spec/syncPolicy 
+  template:
+    metadata:
+      name: '{{ repository }}-{{ path[0] }}-{{ path.basename }}'
+    spec:
+      project: xxx
+      source:
+        repoURL: '{{ url }}'
+        targetRevision: '{{ branch }}'
+        path: '{{ path }}'
+        plugin: 
+          name: avp-kustomize
+      destination:
+        server: '{{ values.cluster }}'
+        namespace: '{{ repository }}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:     # Sync options which modifies sync behavior
+        - CreateNamespace=true
+        - PruneLast=true
+        - ApplyOutOfSyncOnly=true
+        - FailOnSharedResource=true    

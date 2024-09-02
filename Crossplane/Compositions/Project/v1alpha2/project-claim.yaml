@@ -1,0 +1,17 @@
+apiVersion: gcp.odysseycloud.io/v1alpha2
+kind: Project
+metadata:
+  name: test-env-dev
+spec: 
+  name: test-env-dev
+  env: dev
+  team: team2
+  services:
+    projectServicesEssential: true
+    projectServicesK8s: true
+    projectServicesFirebase: true
+    projectServicesVoice: true
+  compositionSelector:
+    matchLabels:
+      meta.odysseycloud.io/provider: GCP
+      meta.odysseycloud.io/service: Project

@@ -1,0 +1,21 @@
+apiVersion: gcp.odysseycloud.io/v1alpha2
+kind: Network
+metadata:
+  name: test-env-dev
+spec: 
+  env: dev
+  team: team1
+  services:
+    projectServicesEssential: true
+    projectServicesK8s: true
+    projectServicesFirebase: true
+    projectServicesVoice: true
+  locations:
+  - syd
+  dns: 
+    subdomain: team1
+    visibility: public
+  compositionSelector:
+    matchLabels:
+      meta.odysseycloud.io/provider: GCP
+      meta.odysseycloud.io/service: Network

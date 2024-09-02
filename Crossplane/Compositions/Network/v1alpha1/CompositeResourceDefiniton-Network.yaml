@@ -1,0 +1,52 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: networks.gcp.odysseycloud.io
+spec:
+  group: gcp.odysseycloud.io
+  names:
+    kind: Network
+    plural: networks
+  claimNames:
+    kind: NetworkClaim
+    plural: networkclaims
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema: 
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              env:
+                type: string
+                description: "Supported environments of GCP project: dev, stg, prod"
+              team:
+                type: string
+                description: GCP project team
+              locations:
+                type: array
+                description: List of locations for subnet
+                items:
+                  type: string
+              dns:
+                type: object
+                description: DNS details of project
+                properties:
+                  subDomain:
+                    description: The subDomain of GCP DNS.
+                    type: string
+                  visibility:
+                    description: The visibility of GCP DNS.
+                    type: string
+                    default: private
+                required:
+                - visibility
+            required:
+            - env
+            - team
+            - locations
+            - dns

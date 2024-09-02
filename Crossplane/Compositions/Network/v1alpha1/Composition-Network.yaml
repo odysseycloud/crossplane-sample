@@ -1,0 +1,224 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: network.gcp.odysseycloud.io
+  labels:
+    meta.odysseycloud.io/provider: GCP
+    meta.odysseycloud.io/service: Network
+spec:
+  compositeTypeRef:
+    apiVersion: gcp.odysseycloud.io/v1alpha1
+    kind: Network
+  mode: Pipeline
+  pipeline:
+  - step: environmentConfigs
+    functionRef:
+        name: function-environment-configs
+    input:
+        apiVersion: environmentconfigs.fn.crossplane.io/v1beta1
+        kind: Input
+        spec:
+          environmentConfigs:
+          - type: Reference
+            ref:
+              name: dev-common-config
+          - type: Selector
+            selector:
+              matchLabels:
+                - key: meta.gcp.odysseycloud.io/env
+                  type: FromCompositeFieldPath
+                  valueFromFieldPath: spec.env
+                - key: meta.gcp.odysseycloud.io/team
+                  type: FromCompositeFieldPath
+                  valueFromFieldPath: spec.team
+  - step: vpc-setup
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+          apiVersion: compute.gcp.upbound.io/v1beta1
+          kind: Network
+          metadata:
+            name: {{ .observed.composite.resource.metadata.name }}-vpc
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ .observed.composite.resource.metadata.name }}-vpc
+          spec:
+            managementPolicies:
+            - Create
+            - Observe
+            deletionPolicy: Orphan
+            forProvider:
+              project: {{ .observed.composite.resource.metadata.name }}
+              routingMode: REGIONAL
+              autoCreateSubnetworks: false
+              description: "vpc for Australia region"
+  - step: subnet-setup
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+          {{- $name := $.observed.composite.resource.metadata.name -}}
+          {{- $locationConfig := index .context "apiextensions.crossplane.io/environment" "locations" -}}
+          {{ range $location := .observed.composite.resource.spec.locations }}
+          apiVersion: compute.gcp.upbound.io/v1beta1
+          kind: Subnetwork
+          metadata:
+            name: {{ $name }}-{{ $location }}-subnet
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-{{ $location }}-subnet
+          spec:
+            managementPolicies:
+            - Create
+            - Observe
+            deletionPolicy: Orphan
+            forProvider:
+              project: {{ $name }}
+              networkSelector:
+                matchControllerRef: true
+              ipCidrRange: {{ index $locationConfig $location "primarySubnet" }}
+              privateIpGoogleAccess: true
+              region: {{ index $locationConfig $location "region" }}
+              secondaryIpRange:
+                - ipCidrRange: {{ index $locationConfig $location "gke" "podSubnet" }}
+                  rangeName: gke-pods
+                - ipCidrRange: {{ index $locationConfig $location "gke" "serviceSubnet" }}
+                  rangeName: gke-services
+          ---
+          apiVersion: compute.gcp.upbound.io/v1beta1
+          kind: Subnetwork
+          metadata:
+            name: {{ $name }}-{{ $location }}-proxy-sybnet
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-{{ $location }}-proxy-sybnet
+          spec:
+            managementPolicies:
+            - Create
+            - Observe
+            deletionPolicy: Orphan
+            forProvider:
+              project: {{ $name }}
+              purpose: REGIONAL_MANAGED_PROXY
+              role: ACTIVE
+              networkSelector:
+                matchControllerRef: true
+              ipCidrRange: {{ index $locationConfig $location "reverseProxySubnet" }}
+              region: {{ index $locationConfig $location "region" }}
+          ---
+          apiVersion: compute.gcp.upbound.io/v1beta1
+          kind: Firewall
+          metadata:
+            name: {{ $name }}-{{ $location }}-k8s-access
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-{{ $location }}-k8s-access
+          spec:
+            managementPolicies:
+            - Create
+            - Observe
+            deletionPolicy: Orphan
+            forProvider:
+              project: {{ $name }}
+              networkSelector:
+                matchControllerRef: true
+              direction: INGRESS
+              sourceRanges:
+                - {{ index $locationConfig $location "reverseProxySubnet" }}
+              allow:
+                - protocol: tcp
+                  ports:
+                  - "80"
+                  - "8080"
+          {{ (printf "---") }}
+          {{ end }}
+  - step: nat-setup
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+          {{- $name := $.observed.composite.resource.metadata.name -}}
+          {{- $locationConfig := index .context "apiextensions.crossplane.io/environment" "locations" -}}
+          {{ range $location := .observed.composite.resource.spec.locations }}
+          apiVersion: compute.gcp.upbound.io/v1beta1
+          kind: Router
+          metadata:
+            name: {{ $name }}-{{ $location }}-router
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-{{ $location }}-router
+          spec:
+            managementPolicies:
+            - Create
+            - Observe
+            deletionPolicy: Orphan
+            forProvider:
+              project: {{ $name }}
+              networkSelector:
+                matchControllerRef: true
+              region: {{ index $locationConfig $location "region" }}
+          ---
+          apiVersion: compute.gcp.upbound.io/v1beta1
+          kind: RouterNAT
+          metadata:
+            name: {{ $name }}-{{ $location }}-nat
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-{{ $location }}-nat
+          spec:
+            managementPolicies:
+            - Create
+            - Observe
+            deletionPolicy: Orphan
+            forProvider:
+              logConfig:
+                - enable: false
+              project: {{ $name }}
+              natIpAllocateOption: AUTO_ONLY
+              region: {{ index $locationConfig $location "region" }}
+              routerSelector:
+                matchControllerRef: true
+              sourceSubnetworkIpRangesToNat: ALL_SUBNETWORKS_ALL_IP_RANGES
+          {{ (printf "---") }}
+          {{ end }}
+  - step: dns-setup
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+          {{- $gcpRootDomain := index .context "apiextensions.crossplane.io/environment" "dns" "gcp" "rootDomain" -}}
+          {{ $env := .observed.composite.resource.spec.env }}
+          apiVersion: gcp.odysseycloud.io/v1alpha1
+          kind: DnsSetup
+          metadata:
+            name: {{ .observed.composite.resource.metadata.name }}-dns-setup
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ .observed.composite.resource.metadata.name }}
+          spec:
+            project_id: {{ .observed.composite.resource.metadata.name }}
+            env: {{ $env }}
+            team: {{ .observed.composite.resource.spec.team }}
+            dns:
+              rootDomain: {{ $env }}.{{ $gcpRootDomain }}
+              subDomain: {{ .observed.composite.resource.spec.dns.subDomain }}
+              visibility: {{ .observed.composite.resource.spec.dns.visibility }}
+              rootDnsProjectId: {{ index .context "apiextensions.crossplane.io/environment" "dns" "gcp" "rootDnsProjectId" }}
+              rootDnsManagedZone: {{ index .context "apiextensions.crossplane.io/environment" "dns" "gcp" "rootDnsProjectId" }}-dns
+            compositionSelector:
+              matchLabels:
+                meta.odysseycloud.io/provider: GCP
+                meta.odysseycloud.io/service: DNS
+  - step: detect-ready-composed-resources
+    functionRef:
+      name: function-auto-ready

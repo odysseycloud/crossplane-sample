@@ -1,0 +1,13 @@
+PROJECT_ID=xxxxx
+GCP_SA_DNS=xxxxx.iam.gserviceaccount.com
+DEPLOY_ENV=non-prod-orchestrator
+SECRET=<path:non-prod-orchestrator
+REGION=syd
+WOKLOAD_IDENTITY=serviceAccount:xxxx
+CLUSTER_NAME=xxxx
+CLUSTER_IP=kubernetes.default.svc
+DEVOPS_CLUSTER_NAME=xxxx
+DEVOPS_CLUSTER_IP=xx.xxx.xx.xx
+DEV_CLUSTER_NAME=xxxxx
+DEV_CLUSTER_IP=xx.xxx.xx.xxx
+GCP_CLOUDPLATFORM_SA=gcp-cloudplatform-non-prod

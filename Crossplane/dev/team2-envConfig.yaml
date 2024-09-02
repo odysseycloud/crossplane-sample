@@ -1,0 +1,20 @@
+apiVersion: apiextensions.crossplane.io/v1alpha1
+kind: EnvironmentConfig
+metadata:
+  name: dev-team2
+  labels: 
+    meta.odysseycloud.io/env-type: non-prod
+    meta.gcp.odysseycloud.io/env: dev
+    meta.gcp.odysseycloud.io/team: team2
+data:
+  env: dev
+  folderName: dev
+  folderId: "xxxx" 
+  commonProjectId: xxxx
+  projectId: xxxx
+  firebaseProjectId: xxxx
+  cloudflareRootDomain: xxxx
+  cloudflare_zone_id: xxxxs #cloudflare domain zone
+  locations:
+    syd: australia-southeast1
+    mlb: australia-southeast2

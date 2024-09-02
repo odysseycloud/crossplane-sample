@@ -1,0 +1,105 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: project.gcp.odysseycloud.io
+  labels:
+    meta.odysseycloud.io/provider: GCP
+    meta.odysseycloud.io/service: Project
+spec:
+  compositeTypeRef:
+    apiVersion: gcp.odysseycloud.io/v1alpha2
+    kind: Project
+  mode: Pipeline
+  pipeline:
+  - step: environmentConfigs
+    functionRef:
+        name: function-environment-configs
+    input:
+        apiVersion: environmentconfigs.fn.crossplane.io/v1beta1
+        kind: Input
+        spec:
+          environmentConfigs:
+          - type: Reference
+            ref:
+              name: dev-common-config
+          - type: Selector
+            selector:
+              matchLabels:
+                - key: meta.gcp.odysseycloud.io/env
+                  type: FromCompositeFieldPath
+                  valueFromFieldPath: spec.env
+                - key: meta.gcp.odysseycloud.io/team
+                  type: FromCompositeFieldPath
+                  valueFromFieldPath: spec.team
+  - step: project
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+          apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+          kind: Project
+          metadata:
+            name: {{ .observed.composite.resource.metadata.name }}
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ .observed.composite.resource.metadata.name }}
+              gotemplating.fn.crossplane.io/external-name: {{ .observed.composite.resource.metadata.name }}
+          spec:
+            managementPolicies:
+            - Create
+            - Observe
+            - Update
+            deletionPolicy: Orphan
+            forProvider:
+              name: {{ .observed.composite.resource.metadata.name }}
+              projectId: {{ .observed.composite.resource.metadata.name }}
+              folderId: {{ index .context "apiextensions.crossplane.io/environment" "folderId" | quote }}
+              autoCreateNetwork: false
+              billingAccount: xxxxx
+  - step: ProjectServices
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+          {{- $servicesToEnable := dict }}
+          {{- $envConfigServices := index .context "apiextensions.crossplane.io/environment" "projectServices" }}
+          {{- $name := .observed.composite.resource.metadata.name }}
+          {{- range $serviceKey, $serviceEnabled := .observed.composite.resource.spec.services }}
+            {{- if $serviceEnabled }}
+              {{- $envServiceConfig := index $envConfigServices $serviceKey }}
+              {{- if $envServiceConfig }}
+                {{- range $serviceName, $serviceApi := $envServiceConfig }}
+                  {{- $servicesToEnable = merge $servicesToEnable (dict $serviceName $serviceApi) }}
+                {{- end }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- range $serviceName, $serviceApi := $servicesToEnable }}
+          apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+          kind: ProjectService
+          metadata:
+            name: {{ $name }}-{{ $serviceName }}
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-{{ $serviceName }}
+          spec:
+            managementPolicies:
+            - Create
+            - Observe
+            deletionPolicy: Orphan
+            forProvider:
+              disableDependentServices: false
+              projectSelector:
+                matchControllerRef: true
+              service: {{ $serviceApi }}
+          {{ (printf "---") }}
+          {{ end }}
+  - step: detect-ready-composed-resources
+    functionRef:
+      name: function-auto-ready

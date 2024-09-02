@@ -1,0 +1,262 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: gcp-project-v1
+  labels:
+    meta.odysseycloud.io/provider: GCP
+spec:
+  environment:
+    environmentConfigs:
+    - type: Selector
+      selector:
+        matchLabels:
+          - key: meta.gcp.odysseycloud.io/env
+            type: FromCompositeFieldPath
+            valueFromFieldPath: spec.env
+          - key: meta.gcp.odysseycloud.io/team
+            type: FromCompositeFieldPath
+            valueFromFieldPath: spec.team
+  compositeTypeRef:
+    apiVersion: gcp.odysseycloud.io/v1alpha1
+    kind: Project
+  patchSets:
+  - name: metadata
+    patches:  
+    - fromFieldPath: metadata.annotations
+      toFieldPath: metadata.annotations
+    - fromFieldPath: spec.name
+      toFieldPath: metadata.name
+  - name: projectInfo
+    patches:  
+    - fromFieldPath: spec.name
+      toFieldPath: spec.forProvider.passwordSecretRef.name
+  resources:
+    - name: gcp-project
+      base:
+        apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+        kind: Project
+        spec:
+          managementPolicies:
+          - Create
+          - Observe
+          deletionPolicy: Orphan
+          forProvider:
+            autoCreateNetwork: false
+            billingAccount: xxxxxxxx
+      patches:
+      - type: PatchSet
+        patchSetName: metadata
+      - fromFieldPath: spec.name
+        toFieldPath: spec.forProvider.name
+      - fromFieldPath: spec.name
+        toFieldPath: spec.forProvider.projectId
+      - type: FromEnvironmentFieldPath
+        fromFieldPath: folderId
+        toFieldPath: spec.forProvider.folderId
+      - type: ToEnvironmentFieldPath
+        fromFieldPath: spec.name
+        toFieldPath: verifyEnvConf
+    - name: projectServiceBilling
+      base:
+        apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+        kind: ProjectService
+        spec:
+          managementPolicies:
+          - Create
+          - Observe
+          deletionPolicy: Orphan
+          forProvider:
+            disableDependentServices: false
+            service: cloudbilling.googleapis.com
+      patches:
+      - fromFieldPath: spec.name
+        toFieldPath: spec.forProvider.projectId
+    - name: projectServiceCloudResourceManager
+      base:
+        apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+        kind: ProjectService
+        spec:
+          managementPolicies:
+            - Create
+            - Observe
+          deletionPolicy: Orphan
+          forProvider:
+            disableDependentServices: false
+            service: cloudresourcemanager.googleapis.com
+      patches:
+      - fromFieldPath: spec.name
+        toFieldPath: spec.forProvider.projectId
+    - name: projectServiceIam
+      base:
+        apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+        kind: ProjectService
+        spec:
+          managementPolicies:
+            - Create
+            - Observe
+          deletionPolicy: Orphan        
+          forProvider:
+            disableDependentServices: false
+            service: iam.googleapis.com
+      patches:
+      - fromFieldPath: spec.name
+        toFieldPath: spec.forProvider.projectId
+    - name: projectServiceManagement
+      base:
+        apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+        kind: ProjectService
+        spec:
+          managementPolicies:
+            - Create
+            - Observe
+          deletionPolicy: Orphan        
+          forProvider:
+            disableDependentServices: false
+            service: servicemanagement.googleapis.com
+    - name: projectServiceUsage
+      base:
+        apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+        kind: ProjectService
+        spec:
+          managementPolicies:
+            - Create
+            - Observe
+          deletionPolicy: Orphan        
+          forProvider:
+            disableDependentServices: false
+            service: serviceusage.googleapis.com
+      patches:
+      - fromFieldPath: spec.name
+        toFieldPath: spec.forProvider.projectId
+    - name: projectServiceTts
+      base:
+        apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+        kind: ProjectService
+        spec:
+          managementPolicies:
+            - Create
+            - Observe
+          deletionPolicy: Orphan        
+          forProvider:
+            disableDependentServices: false
+            service: texttospeech.googleapis.com
+      patches:
+      - fromFieldPath: spec.name
+        toFieldPath: spec.forProvider.projectId
+    - name: projectServiceCloudFunctions
+      base:
+        apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+        kind: ProjectService
+        spec:
+          managementPolicies:
+            - Create
+            - Observe
+          deletionPolicy: Orphan        
+          forProvider:
+            disableDependentServices: false
+            service: cloudfunctions.googleapis.com
+      patches:
+      - fromFieldPath: spec.name
+        toFieldPath: spec.forProvider.projectId
+    - name: projectServiceDns
+      base:
+        apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+        kind: ProjectService
+        spec:
+          managementPolicies:
+            - Create
+            - Observe
+          deletionPolicy: Orphan
+          forProvider:
+            disableDependentServices: false
+            service: dns.googleapis.com
+      patches:
+      - fromFieldPath: spec.name
+        toFieldPath: spec.forProvider.projectId
+    - name: projectServiceFirebase
+      base:
+        apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+        kind: ProjectService
+        spec:
+          managementPolicies:
+            - Create
+            - Observe
+          deletionPolicy: Orphan
+          forProvider:
+            disableDependentServices: false
+            service: firebase.googleapis.com
+      patches:
+      - fromFieldPath: spec.name
+        toFieldPath: spec.forProvider.projectId
+    - name: projectServiceFirestore
+      base:
+        apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+        kind: ProjectService
+        spec:
+          managementPolicies:
+            - Create
+            - Observe
+          deletionPolicy: Orphan
+          forProvider:
+            disableDependentServices: false
+            service: firestore.googleapis.com
+      patches:
+      - fromFieldPath: spec.name
+        toFieldPath: spec.forProvider.projectId
+    - name: projectServiceFirebaseAuth
+      base:
+        apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+        kind: ProjectService
+        spec:
+          managementPolicies:
+            - Create
+            - Observe
+          deletionPolicy: Orphan
+          forProvider:
+            disableDependentServices: false
+            service: identitytoolkit.googleapis.com
+      patches:
+      - fromFieldPath: spec.name
+        toFieldPath: spec.forProvider.projectId
+    - name: projectServiceFirebaseHosting
+      base:
+        apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+        kind: ProjectService
+        spec:
+          managementPolicies:
+            - Create
+            - Observe
+          deletionPolicy: Orphan
+          forProvider:
+            disableDependentServices: false
+            service: firebasehosting.googleapis.com
+    - name: projectServiceFirebaseStorage
+      base:
+        apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+        kind: ProjectService
+        spec:
+          managementPolicies:
+            - Create
+            - Observe
+          deletionPolicy: Orphan
+          forProvider:
+            disableDependentServices: false
+            service: firebasestorage.googleapis.com
+      patches:
+      - fromFieldPath: spec.name
+        toFieldPath: spec.forProvider.projectId
+    - name: projectServiceFirebaseRules
+      base:
+        apiVersion: cloudplatform.gcp.upbound.io/v1beta1
+        kind: ProjectService
+        spec:
+          managementPolicies:
+            - Create
+            - Observe
+          deletionPolicy: Orphan
+          forProvider:
+            disableDependentServices: false
+            service: firebaserules.googleapis.com
+      patches:
+      - fromFieldPath: spec.name
+        toFieldPath: spec.forProvider.projectId

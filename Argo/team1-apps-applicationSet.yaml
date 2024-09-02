@@ -1,0 +1,64 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: dev-apps-setup
+spec:
+  generators:
+  - matrix:                                                                                 
+      generators:
+      - scmProvider: 
+          gitlab:
+            # The Gitlab group ID to scan.
+            group: "xxxxx"
+            # If true, scan every branch of every repository. If false, scan only the default branch. Defaults to false.
+            allBranches: true
+            # If true, recurses through subgroups. If false, it searches only in the base group. Defaults to false.
+            includeSubgroups: true
+            # Reference to a Secret containing an access token. (optional)
+            tokenRef:
+              secretName: gitlab-repo-token
+              key: password
+          cloneProtocol: https
+          filters: 
+          # - pathsExist: [argochart]
+          - labelMatch: 'gitops-enabled'
+      - git:
+          directories:
+          - path: argochart/cd/*
+          repoURL: '{{ url }}'
+          revision: '{{ branch }}'
+          values:
+            env: dev
+            org: xxx
+            cluster: dev-syd
+  ignoreApplicationDifferences:
+    - jsonPointers: 
+      - /spec/source/targetRevision
+      # - /spec/source/plugin/env
+      - /spec/syncPolicy 
+  template:
+    metadata:
+      name: '{{ path.basename }}-{{ values.env }}-{{ branchNormalized }}'
+    spec:
+      project: xxxx
+      source:
+        repoURL: '{{ url }}'
+        targetRevision: '{{ branch }}'
+        path: '{{ path }}'
+        plugin: 
+          name: avp-helm
+          env:
+            - name: HELM_ARGS
+              value: '-f {{ values.env }}/{{ path.basename }}-common-values.yaml -f {{ values.env }}/{{ values.env }}-{{ branchNormalized }}/{{ path.basename }}-{{ values.env }}-dynamic-values.yaml -f {{ values.env }}/{{ values.env }}-{{ branchNormalized }}/{{ path.basename }}-{{ values.env }}-values.yaml'
+      destination:
+        name: '{{ values.cluster }}'
+        namespace: '{{ path.basename }}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:     # Sync options which modifies sync behavior
+        - CreateNamespace=true
+        - PruneLast=true
+        - ApplyOutOfSyncOnly=true
+        - FailOnSharedResource=true    

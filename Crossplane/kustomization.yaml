@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../base
+- Compositions
+- EnvironmentConfigs
+- environments
+- Providers
+
+
+namespace: infra
+
+generatorOptions:
+  disableNameSuffixHash: true
+  
+configMapGenerator:
+- behavior: create
+  envs: [env-vars]
+  name: crossplane-env-vars
+
+commonAnnotations:
+  argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+
+components:
+  - ../../components/replacements
+
+ 

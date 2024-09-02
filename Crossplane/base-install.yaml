@@ -1,0 +1,10 @@
+replicas: 2
+
+rbacManager:
+  managementPolicy: "All"
+
+args:
+  - --enable-composition-functions
+  - --enable-composition-functions-extra-resources
+  - --enable-environment-configs
+  - --enable-usages

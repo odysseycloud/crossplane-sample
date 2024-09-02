@@ -1,0 +1,8 @@
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: provider-gcp-cloudplatform
+  annotations:
+    iam.gke.io/gcp-service-account: provider-gcp-cloudplatform@${GCP_SA_DNS}.iam.gserviceaccount.com
+spec: 
+  serviceAccount: provider-gcp-cloudplatform

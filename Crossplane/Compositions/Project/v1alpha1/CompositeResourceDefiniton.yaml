@@ -1,0 +1,36 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: projects.gcp.odysseycloud.io
+spec:
+  group: gcp.odysseycloud.io
+  names:
+    kind: Project
+    plural: projects
+  claimNames:
+    kind: ProjectClaim
+    plural: projectclaims
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema: 
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Name of GCP project
+              env:
+                type: string
+                description: "Supported environments of GCP project: dev, stg, prod"
+              team:
+                type: string
+                description: GCP project team
+            required:
+            - name
+            - env
+            - team

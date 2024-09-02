@@ -1,0 +1,80 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: nw.gcp.odysseycloud.io
+  labels:
+    meta.odysseycloud.io/provider: GCP
+    meta.odysseycloud.io/service: Nw
+spec:
+  compositeTypeRef:
+    apiVersion: gcp.odysseycloud.io/v1alpha1
+    kind: Nw
+  mode: Pipeline
+  pipeline:
+  - step: gke-proj-setup
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+        - name: GcpProject
+          base: 
+            apiVersion: gcp.odysseycloud.io/v1alpha2
+            kind: Project
+            spec:
+              compositionSelector:
+                matchLabels:
+                  meta.odysseycloud.io/provider: GCP
+                  meta.odysseycloud.io/service: Project
+          patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: metadata.name
+            toFieldPath: metadata.name
+          - type: FromCompositeFieldPath
+            fromFieldPath: metadata.name
+            toFieldPath: spec.name
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.env
+            toFieldPath: spec.env
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.team
+            toFieldPath: spec.team
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.services
+            toFieldPath: spec.services
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.services
+            toFieldPath: spec.services
+  - step: gke-nw-setup
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+          apiVersion: gcp.odysseycloud.io/v1alpha1
+          kind: Network
+          metadata:
+            name: {{ .observed.composite.resource.metadata.name }}
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ .observed.composite.resource.metadata.name }}
+          spec:
+            env: {{ .observed.composite.resource.spec.env }}
+            team: {{ .observed.composite.resource.spec.team }}
+            locations:
+            {{- range .observed.composite.resource.spec.locations }}
+              - {{ . }}
+            {{- end }}
+            dns:
+              subDomain: {{ .observed.composite.resource.spec.dns.subDomain }}
+              visibility: {{ .observed.composite.resource.spec.dns.visibility }}
+            compositionSelector:
+              matchLabels:
+                meta.odysseycloud.io/provider: GCP
+                meta.odysseycloud.io/service: Network
+  - step: detect-ready-composed-resources
+    functionRef:
+      name: function-auto-ready

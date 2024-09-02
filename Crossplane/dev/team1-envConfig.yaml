@@ -1,0 +1,15 @@
+apiVersion: apiextensions.crossplane.io/v1alpha1
+kind: EnvironmentConfig
+metadata:
+  name: dev-team1
+  labels: 
+    meta.gcp.odysseycloud.io/env: dev
+    meta.gcp.odysseycloud.io/team: team1
+data:
+  folderName: team1
+  folderId: "xxxxx"  
+  commonProjectId: xxx
+  gke:
+    nodeSize: 
+      small: e2-standard-2
+      med: e2-standard-4

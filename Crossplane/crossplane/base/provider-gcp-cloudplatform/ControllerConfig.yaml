@@ -1,0 +1,8 @@
+apiVersion: pkg.crossplane.io/v1alpha1
+kind: ControllerConfig
+metadata:
+  name: provider-gcp-cloudplatform
+  annotations:
+    iam.gke.io/gcp-service-account: provider-gcp-cloudplatform@${GCP_SA_DNS}.iam.gserviceaccount.com
+spec: 
+  serviceAccountName: provider-gcp-cloudplatform

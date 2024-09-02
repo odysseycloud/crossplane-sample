@@ -1,0 +1,96 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: projects.gcp.odysseycloud.io
+spec:
+  group: gcp.odysseycloud.io
+  names:
+    kind: Project
+    plural: projects
+  claimNames:
+    kind: ProjectClaim
+    plural: projectclaims
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: false
+    schema:
+      openAPIV3Schema: 
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Name of GCP project
+              env:
+                type: string
+                description: "Supported environments of GCP project: dev, stg, prod"
+              team:
+                type: string
+                description: GCP project team
+            required:
+            - name
+            - env
+            - team
+  - name: v1alpha2
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema: 
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Name of GCP project
+              env:
+                type: string
+                description: "Supported environments of GCP project: dev, stg, prod"
+              team:
+                type: string
+                description: GCP project team
+              services:
+                type: object
+                description: List of services for project
+                properties:
+                  projectServicesEssential:
+                    type: boolean
+                    description: Essential services for GCP project
+                    default: true
+                  projectServicesStorage:
+                    type: boolean
+                    description: Storage services for GCP project
+                    default: false
+                  projectServicesPubSub:
+                    type: boolean
+                    description: PubSub services for GCP project
+                    default: false
+                  projectServicesCloudFunctions:
+                    type: boolean
+                    description: Cloud Fucntion services for GCP project
+                    default: false
+                  projectServicesK8s:
+                    type: boolean
+                    description: k8s services for GCP project
+                    default: false
+                  projectServicesBigQuery:
+                    type: boolean
+                    description: BQ services for GCP project
+                    default: false
+                  projectServicesFirebase:
+                    type: boolean
+                    description: Firebase services for GCP project
+                    default: false
+                  projectServicesVoice:
+                    type: boolean
+                    description: Voice services for GCP project
+                    default: false
+            required:
+            - name
+            - env
+            - team
+            - services

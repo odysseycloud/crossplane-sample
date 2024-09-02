@@ -1,0 +1,91 @@
+apiVersion: apiextensions.crossplane.io/v1alpha1
+kind: EnvironmentConfig
+metadata:
+  name: dev-common-config
+  labels: 
+    meta.odysseycloud.io/env-type: non-prod
+    meta.gcp.odysseycloud.io/env: dev
+data:
+  env: dev
+  folderName: dev
+  folderId: "xxxxx" 
+  cloudflareRootDomain: xxxx
+  cloudflare_zone_id: xxx 
+  dns:
+    gcp:
+      rootDomain: xxxx
+      rootDnsProjectId: xxxx
+  projectServices:
+    projectServicesEssential:
+      cloudbilling: cloudbilling.googleapis.com
+      cloudresourcemanager: cloudresourcemanager.googleapis.com
+      iam: iam.googleapis.com
+      iamcredentials: iamcredentials.googleapis.com
+      logging: logging.googleapis.com
+      servicemanagement: servicemanagement.googleapis.com
+      monitoring: monitoring.googleapis.com
+      securitycenter: securitycenter.googleapis.com
+      serviceusage: serviceusage.googleapis.com
+      websecurityscanner: websecurityscanner.googleapis.com
+      identitytoolkit: identitytoolkit.googleapis.com
+      google-workspace: admin.googleapis.com
+    projectServicesStorage:
+      storage-api: storage-api.googleapis.com
+      storage-component: storage-component.googleapis.com
+    projectServicesPubSub:
+      pubsub: pubsub.googleapis.com
+    projectServicesCloudFunctions:
+      # source: source.googleapis.com
+      cloudfunctions: cloudfunctions.googleapis.com
+      pubsub: pubsub.googleapis.com
+      storage-api: storage-api.googleapis.com
+      storage-component: storage-component.googleapis.com
+    projectServicesK8s:
+      artifactregistry: artifactregistry.googleapis.com
+      compute: compute.googleapis.com
+      container: container.googleapis.com
+      containerfilesystem: containerfilesystem.googleapis.com
+      containerregistry: containerregistry.googleapis.com
+      dns: dns.googleapis.com
+      gkebackup: gkebackup.googleapis.com
+      kubernetesmetadata: kubernetesmetadata.googleapis.com
+      networkconnectivity: networkconnectivity.googleapis.com
+      oslogin: oslogin.googleapis.com #for ssh access
+      pubsub: pubsub.googleapis.com
+      storage-api: storage-api.googleapis.com
+      certificatemanager: certificatemanager.googleapis.com
+      autoscaling: autoscaling.googleapis.com
+    projectServicesBigQuery:
+      bigquery: bigquery.googleapis.com
+      bigquerystorage: bigquerystorage.googleapis.com
+      bigquerymigration: bigquerymigration.googleapis.com
+    projectServicesFirebase:
+      firebase: firebase.googleapis.com
+      firebasehosting: firebasehosting.googleapis.com
+      firebaserules: firebaserules.googleapis.com
+      firebasestorage: firebasestorage.googleapis.com
+      firestore: firestore.googleapis.com
+    projectServicesVoice:
+      speech: speech.googleapis.com
+      texttospeech: texttospeech.googleapis.com
+  locations:
+    syd: 
+      region: australia-southeast1
+      primarySubnet: xx.xxx.xx.x/24
+      reverseProxySubnet: xx.xxx.xxx.x/24
+      gke:
+        nodeSize: 
+          small: e2-standard-2
+          med: e2-standard-4
+          large: e2-standard-8
+        masterCidr: xxx.xx.xxx.x/28
+        podSubnet: xx.xx.xxx.x/20
+        serviceSubnet: xx.xx.xxx.x/22
+    mlb:
+      region: australia-southeast2
+      primarySubnet: xx.xx.xxx.x/24
+      reverseProxySubnet: xx.xx.xxx.x/24
+      gke:
+        masterCidr: xxx.xx.xxx.x/28
+        podSubnet: xx.xx.xxx.x/20
+        serviceSubnet: xx.xx.xxx.x/22
