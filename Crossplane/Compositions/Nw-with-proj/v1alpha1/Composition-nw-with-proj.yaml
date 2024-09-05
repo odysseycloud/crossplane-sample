@@ -75,6 +75,31 @@ spec:
               matchLabels:
                 meta.odysseycloud.io/provider: GCP
                 meta.odysseycloud.io/service: Network
+  - step: network-uses-project
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+          apiVersion: apiextensions.crossplane.io/v1alpha1
+          kind: Usage
+          metadata:
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ .observed.composite.resource.metadata.name }}-network-uses-project
+          spec:
+            by:
+              apiVersion: gcp.odysseycloud.io/v1alpha1
+              kind: Network
+              resourceSelector:
+                matchControllerRef: true
+            of:x
+              apiVersion: gcp.odysseycloud.io/v1alpha2
+              kind: Project
+              resourceSelector:
+                matchControllerRef: true
   - step: detect-ready-composed-resources
     functionRef:
       name: function-auto-ready
